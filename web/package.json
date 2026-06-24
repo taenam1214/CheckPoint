@@ -1,0 +1,42 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "@tanstack/react-query": "^5.101.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.8.5",
+    "lucide-react": "^1.21.0",
+    "postgres": "^3.4.9",
+    "radix-ui": "^1.6.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router": "^8.0.1",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "drizzle-kit": "^0.31.10",
+    "oxlint": "^1.69.0",
+    "tsx": "^4.22.4",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.0"
+  }
+}

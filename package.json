@@ -7,7 +7,9 @@
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm --filter web build && pnpm --filter api build",
     "db:generate": "pnpm --filter api db:generate",
+    "db:push": "pnpm --filter api db:push",
     "db:migrate": "pnpm --filter api db:migrate",
-    "db:seed": "pnpm --filter api db:seed"
+    "db:seed": "pnpm --filter api db:seed",
+    "db:reset": "pnpm --filter api db:reset"
   }
 }

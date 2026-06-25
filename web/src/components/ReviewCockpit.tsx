@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchDecisions, submitReview } from "../lib/api";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
+import { AppHeader } from "./AppHeader";
 
 export function ReviewCockpit() {
   const queryClient = useQueryClient();
@@ -111,24 +112,7 @@ export function ReviewCockpit() {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Top bar */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-background px-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold text-foreground">Checkpoint</h1>
-          <span className="text-xs text-muted-foreground">Review Queue</span>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
-            {decisions.length} pending
-          </span>
-          <a
-            href="/audit"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            Audit Trail →
-          </a>
-        </div>
-      </header>
+      <AppHeader currentPage="review" pendingCount={decisions.length} />
 
       {/* Two-pane layout */}
       <div className="flex flex-1 overflow-hidden">

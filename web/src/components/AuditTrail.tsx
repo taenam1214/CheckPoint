@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
+import { AppHeader } from "./AppHeader";
 
 const EVENT_LABELS: Record<string, { label: string; color: string }> = {
   decision_created: { label: "Created", color: "bg-blue-100 text-blue-700" },
@@ -39,21 +40,7 @@ export function AuditTrail() {
 
   return (
     <div className="flex h-screen flex-col">
-      {/* Top bar */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-background px-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold text-foreground">Checkpoint</h1>
-          <span className="text-xs text-muted-foreground">Audit Trail</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <a
-            href="/"
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            ← Review Queue
-          </a>
-        </div>
-      </header>
+      <AppHeader currentPage="audit" />
 
       {/* Filters & export */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">

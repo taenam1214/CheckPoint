@@ -78,3 +78,17 @@ export async function fetchAuditLog(params?: {
 export function getAuditExportUrl(): string {
   return `${API_BASE}/api/audit/export?format=csv`;
 }
+
+// ─── Demo ────────────────────────────────────────────────────
+
+export async function resetDemo(): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE}/api/demo/reset`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to reset demo");
+  return res.json();
+}
+
+export async function dripDecision(): Promise<{ dripped: string }> {
+  const res = await fetch(`${API_BASE}/api/demo/drip`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to drip decision");
+  return res.json();
+}

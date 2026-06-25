@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileText, BookOpen, History, Check, X, Pencil, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import type { Decision } from "../lib/api";
 import { Button } from "./ui/button";
@@ -71,6 +72,18 @@ const RISK_COLORS = {
   low: "text-emerald-600",
 } as const;
 
+const RISK_TOP_BORDER = {
+  high: "border-t-3 border-t-red-500",
+  medium: "border-t-3 border-t-amber-500",
+  low: "border-t-3 border-t-emerald-500",
+} as const;
+
+const RISK_BG = {
+  high: "bg-risk-high-bg",
+  medium: "bg-risk-medium-bg",
+  low: "bg-background",
+} as const;
+
 interface DecisionDetailProps {
   decision: Decision;
   onAction: (verdict: "approved" | "rejected" | "edited", note?: string) => void;
@@ -103,9 +116,12 @@ export function DecisionDetail({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
-      {/* Header */}
-      <div className="border-b border-border px-6 py-4">
+    <div
+      key={decision.id}
+      className={cn("flex h-full flex-col overflow-y-auto animate-fade-in", RISK_BG[decision.riskTier])}
+    >
+      {/* Header with risk-colored top border */}
+      <div className={cn("border-b border-border px-6 py-4", RISK_TOP_BORDER[decision.riskTier])}>
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-semibold leading-snug text-foreground">
             {decision.proposedAction}
@@ -139,7 +155,8 @@ export function DecisionDetail({
 
       {/* Context facts */}
       <div className="border-b border-border px-6 py-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <FileText className="h-3.5 w-3.5" />
           Key Facts
         </h3>
         <div className="space-y-2">
@@ -169,15 +186,19 @@ export function DecisionDetail({
 
       {/* Policy note */}
       <div className="border-b border-border px-6 py-4">
+        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <BookOpen className="h-3.5 w-3.5" />
+          Policy
+        </h3>
         <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-          <span className="font-semibold">Policy: </span>
           {decision.context.policy_note}
         </div>
       </div>
 
       {/* Similar cases */}
       <div className="border-b border-border px-6 py-4">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <History className="h-3.5 w-3.5" />
           Similar Cases
         </h3>
         <div className="space-y-1.5">
@@ -211,7 +232,7 @@ export function DecisionDetail({
 
       {/* Edit sheet */}
       {editMode && (
-        <div className="border-b border-border bg-muted/30 px-6 py-4">
+        <div className="border-b border-border bg-muted/30 px-6 py-4 animate-fade-in">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Edit & Approve
           </h3>
@@ -229,6 +250,11 @@ export function DecisionDetail({
               onClick={handleEdit}
               disabled={isSubmitting || !note.trim()}
             >
+              {isSubmitting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
               Confirm Edit & Approve
             </Button>
             <Button size="sm" variant="outline" onClick={handleCancel}>
@@ -239,15 +265,20 @@ export function DecisionDetail({
       )}
 
       {/* Action buttons */}
-      <div className="mt-auto border-t border-border px-6 py-4">
+      <div className="mt-auto border-t border-border bg-background px-6 py-4">
         <div className="flex items-center gap-3">
           <Button
             onClick={() => onAction("approved")}
             disabled={isSubmitting || editMode}
             className="bg-emerald-600 text-white hover:bg-emerald-700"
           >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
             Approve
-            <kbd className="ml-2 rounded bg-emerald-700/50 px-1.5 py-0.5 text-[10px] font-mono">
+            <kbd className="ml-1 rounded bg-emerald-700/50 px-1.5 py-0.5 text-[10px] font-mono">
               A
             </kbd>
           </Button>
@@ -256,8 +287,13 @@ export function DecisionDetail({
             disabled={isSubmitting || editMode}
             variant="destructive"
           >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <X className="h-4 w-4" />
+            )}
             Reject
-            <kbd className="ml-2 rounded bg-red-700/50 px-1.5 py-0.5 text-[10px] font-mono text-white">
+            <kbd className="ml-1 rounded bg-red-700/50 px-1.5 py-0.5 text-[10px] font-mono text-white">
               R
             </kbd>
           </Button>
@@ -266,8 +302,9 @@ export function DecisionDetail({
             disabled={isSubmitting}
             variant="outline"
           >
+            <Pencil className="h-4 w-4" />
             {editMode ? "Submit Edit" : "Edit & Approve"}
-            <kbd className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">
+            <kbd className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">
               E
             </kbd>
           </Button>

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { Toaster } from "sonner";
 import { ReviewCockpit } from "./components/ReviewCockpit";
 import { AuditTrail } from "./components/AuditTrail";
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/audit" element={<AuditTrail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <Toaster position="bottom-right" richColors closeButton />
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { fetchDecisions, submitReview } from "../lib/api";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
+import { QueueSkeleton } from "./QueueSkeleton";
+import { DetailSkeleton } from "./DetailSkeleton";
 
 export function ReviewCockpit() {
   const queryClient = useQueryClient();
@@ -34,7 +37,7 @@ export function ReviewCockpit() {
       verdict: "approved" | "rejected" | "edited";
       note?: string;
     }) => submitReview(decisionId, verdict, note),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       // Auto-advance: select the next item (or previous if at end)
       const nextIndex = selectedIndex < decisions.length - 1
         ? selectedIndex + 1
@@ -42,6 +45,14 @@ export function ReviewCockpit() {
       const nextId = decisions[nextIndex]?.id || null;
 
       queryClient.invalidateQueries({ queryKey: ["decisions"] });
+
+      // Fire toast
+      const verdictLabels = {
+        approved: "Decision approved",
+        rejected: "Decision rejected",
+        edited: "Decision edited & approved",
+      };
+      toast.success(verdictLabels[variables.verdict]);
 
       // Set next selection after refetch — use a small delay to let data refresh
       setTimeout(() => setSelectedId(nextId), 100);
@@ -92,7 +103,6 @@ export function ReviewCockpit() {
         }
         case "e": {
           // Only trigger edit mode — actual submit handled by component
-          // We just pass through here; the DecisionDetail handles "e" for opening edit
           break;
         }
       }
@@ -104,15 +114,30 @@ export function ReviewCockpit() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading queue...</p>
+      <div className="flex h-screen flex-col">
+        <AppHeader
+          currentPage="review"
+          onResetSuccess={() => toast.success("Demo reset complete")}
+        />
+        <div className="flex flex-1 overflow-hidden">
+          <aside className="w-[380px] shrink-0 overflow-y-auto border-r border-border bg-background">
+            <QueueSkeleton />
+          </aside>
+          <main className="flex-1 overflow-hidden bg-background">
+            <DetailSkeleton />
+          </main>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-screen flex-col">
-      <AppHeader currentPage="review" pendingCount={decisions.length} />
+      <AppHeader
+        currentPage="review"
+        pendingCount={decisions.length}
+        onResetSuccess={() => toast.success("Demo reset complete")}
+      />
 
       {/* Two-pane layout */}
       <div className="flex flex-1 overflow-hidden">

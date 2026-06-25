@@ -923,9 +923,8 @@ const DECISION_TEMPLATES: DecisionTemplate[] = [
   },
 ];
 
-// ─── Seed runner ────────────────────────────────────────────
-async function seed() {
-  console.log("🌱 Clearing existing data...");
+// ─── Reusable seed function (used by CLI and reset endpoint) ─
+export async function runSeed() {
   // Disable triggers temporarily for cleanup
   await db.execute(sql`ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_delete`);
   await db.execute(sql`ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_update`);
@@ -936,14 +935,11 @@ async function seed() {
   await db.execute(sql`ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_delete`);
   await db.execute(sql`ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_update`);
 
-  console.log("🤖 Inserting agents...");
   const insertedAgents = await db
     .insert(agents)
     .values(AGENTS.map((a) => ({ ...a })))
     .returning();
-  console.log(`   Inserted ${insertedAgents.length} agents`);
 
-  console.log("📋 Inserting decisions + audit_log entries...");
   let count = 0;
   for (const template of DECISION_TEMPLATES) {
     const agent = insertedAgents[template.agentIndex];
@@ -966,7 +962,6 @@ async function seed() {
       })
       .returning();
 
-    // Matching audit_log entry
     await db.insert(auditLog).values({
       decisionId: decision.id,
       eventType: "decision_created",
@@ -984,13 +979,20 @@ async function seed() {
     count++;
   }
 
-  console.log(`   Inserted ${count} decisions with matching audit_log rows`);
-  console.log("✅ Seed complete!");
-
-  process.exit(0);
+  return count;
 }
 
-seed().catch((err) => {
-  console.error("❌ Seed failed:", err);
-  process.exit(1);
-});
+// ─── CLI runner ──────────────────────────────────────────────
+// Only run when executed directly (not imported)
+const isDirectRun = process.argv[1]?.includes("seed");
+if (isDirectRun) {
+  runSeed()
+    .then((count) => {
+      console.log(`✅ Seeded ${count} decisions`);
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error("❌ Seed failed:", err);
+      process.exit(1);
+    });
+}

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { ReviewCockpit } from "./components/ReviewCockpit";
+import { AuditTrail } from "./components/AuditTrail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,16 +10,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function AuditTrail() {
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <h1 className="text-2xl font-semibold text-foreground">
-        Audit Trail — Coming Soon
-      </h1>
-    </div>
-  );
-}
 
 function App() {
   return (

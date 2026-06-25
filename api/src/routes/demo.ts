@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../db/index.js";
 import { sql } from "drizzle-orm";
+import { runSeed } from "../db/seed.js";
 
 const { agents, decisions, reviews, auditLog } = schema;
 
@@ -222,77 +223,10 @@ export async function demoRoutes(app: FastifyInstance) {
     return { dripped: decision.id, action: decision.proposedAction };
   });
 
-  // POST /api/demo/reset — wipe and re-seed
+  // POST /api/demo/reset — wipe and re-seed with full hand-authored data
   app.post("/api/demo/reset", async () => {
-    // Disable audit_log triggers for cleanup
-    await db.execute(sql`ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_delete`);
-    await db.execute(sql`ALTER TABLE audit_log DISABLE TRIGGER audit_log_no_update`);
-
-    await db.execute(sql`DELETE FROM audit_log`);
-    await db.execute(sql`DELETE FROM reviews`);
-    await db.execute(sql`DELETE FROM decisions`);
-    await db.execute(sql`DELETE FROM agents`);
-
-    // Re-enable triggers
-    await db.execute(sql`ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_delete`);
-    await db.execute(sql`ALTER TABLE audit_log ENABLE TRIGGER audit_log_no_update`);
-
-    // Re-seed agents
-    const AGENT_DATA = [
-      { name: "LoanPreApprovalBot", workflow: "loan_pre_approval", autonomyThreshold: 0.85 },
-      { name: "ClaimsAdjudicator", workflow: "insurance_claims", autonomyThreshold: 0.9 },
-      { name: "WireTransferValidator", workflow: "wire_transfers", autonomyThreshold: 0.92 },
-    ];
-
-    const insertedAgents = await db
-      .insert(agents)
-      .values(AGENT_DATA)
-      .returning();
-
-    // Import and run a minimal seed — insert a handful of decisions per risk tier
-    const QUICK_SEED = [
-      { agentIdx: 0, action: "Approve $42,000 personal loan for applicant #8841", conf: 0.52, risk: "high" as const },
-      { agentIdx: 0, action: "Approve $95,000 home equity line for applicant #7203", conf: 0.41, risk: "high" as const },
-      { agentIdx: 1, action: "Approve $18,500 water damage claim for policy #CLM-4419", conf: 0.44, risk: "high" as const },
-      { agentIdx: 2, action: "Execute $125,000 wire transfer to new payee for account #WR-8831", conf: 0.39, risk: "high" as const },
-      { agentIdx: 0, action: "Approve $22,000 personal loan for applicant #9310", conf: 0.72, risk: "medium" as const },
-      { agentIdx: 0, action: "Approve $35,000 debt consolidation loan for applicant #8550", conf: 0.68, risk: "medium" as const },
-      { agentIdx: 1, action: "Approve $8,400 fender-bender claim for policy #CLM-6622", conf: 0.70, risk: "medium" as const },
-      { agentIdx: 2, action: "Execute $45,000 wire transfer for account #WR-7200", conf: 0.71, risk: "medium" as const },
-      { agentIdx: 2, action: "Execute $22,000 wire transfer for account #WR-8100", conf: 0.69, risk: "medium" as const },
-      { agentIdx: 0, action: "Approve $8,000 personal loan for applicant #9900", conf: 0.94, risk: "low" as const },
-      { agentIdx: 0, action: "Approve $15,000 auto loan for applicant #9920", conf: 0.91, risk: "low" as const },
-      { agentIdx: 1, action: "Approve $2,100 fender-bender claim for policy #CLM-10300", conf: 0.92, risk: "low" as const },
-      { agentIdx: 1, action: "Approve $950 windshield chip repair for policy #CLM-10400", conf: 0.95, risk: "low" as const },
-      { agentIdx: 2, action: "Execute $5,000 wire transfer for account #WR-10700", conf: 0.94, risk: "low" as const },
-      { agentIdx: 2, action: "Execute $8,200 wire transfer for account #WR-10800", conf: 0.91, risk: "low" as const },
-    ];
-
-    for (const s of QUICK_SEED) {
-      const agent = insertedAgents[s.agentIdx];
-      const [decision] = await db
-        .insert(decisions)
-        .values({
-          agentId: agent.id,
-          status: "pending",
-          proposedAction: s.action,
-          confidence: s.conf,
-          riskTier: s.risk,
-          context: { summary: s.action, facts: [], policy_note: "" },
-          similarCases: [],
-        })
-        .returning();
-
-      await db.insert(auditLog).values({
-        decisionId: decision.id,
-        eventType: "decision_created",
-        snapshot: { decision_id: decision.id, agent: agent.name, proposed_action: s.action },
-      });
-    }
-
-    // Reset drip index
+    const count = await runSeed();
     dripIndex = 0;
-
-    return { status: "reset", decisions_seeded: QUICK_SEED.length };
+    return { status: "reset", decisions_seeded: count };
   });
 }

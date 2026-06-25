@@ -1,3 +1,4 @@
+import { Bot, Inbox } from "lucide-react";
 import { cn } from "../lib/utils";
 import type { Decision } from "../lib/api";
 
@@ -11,6 +12,12 @@ const RISK_DOT = {
   high: "bg-red-500",
   medium: "bg-amber-500",
   low: "bg-emerald-500",
+} as const;
+
+const RISK_BORDER = {
+  high: "border-l-red-500",
+  medium: "border-l-amber-500",
+  low: "border-l-emerald-500",
 } as const;
 
 function timeAgo(date: string): string {
@@ -34,8 +41,12 @@ interface QueueListProps {
 export function QueueList({ decisions, selectedId, onSelect }: QueueListProps) {
   if (decisions.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        No pending decisions
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Inbox className="h-10 w-10 stroke-[1.5]" />
+        <div className="text-center">
+          <p className="text-sm font-medium">All caught up</p>
+          <p className="mt-0.5 text-xs">No pending decisions to review</p>
+        </div>
       </div>
     );
   }
@@ -47,8 +58,11 @@ export function QueueList({ decisions, selectedId, onSelect }: QueueListProps) {
           key={d.id}
           onClick={() => onSelect(d.id)}
           className={cn(
-            "flex flex-col gap-1 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50",
-            selectedId === d.id && "bg-muted",
+            "flex flex-col gap-1 border-b border-l-3 border-border px-4 py-3 text-left transition-all animate-fade-in",
+            RISK_BORDER[d.riskTier],
+            selectedId === d.id
+              ? "bg-muted ring-1 ring-inset ring-border shadow-sm"
+              : "hover:bg-muted/50",
           )}
         >
           <div className="flex items-start justify-between gap-2">
@@ -68,15 +82,18 @@ export function QueueList({ decisions, selectedId, onSelect }: QueueListProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{d.agentName}</span>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Bot className="h-3 w-3" />
+              {d.agentName}
+            </span>
             <span className="text-border">·</span>
             {/* Confidence bar */}
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-16 rounded-full bg-muted">
                 <div
                   className={cn(
-                    "h-1.5 rounded-full",
+                    "h-1.5 rounded-full transition-all",
                     d.confidence >= 0.8
                       ? "bg-emerald-500"
                       : d.confidence >= 0.6

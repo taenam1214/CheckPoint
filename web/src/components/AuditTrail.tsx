@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Filter, Download, FileSearch } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
@@ -37,6 +37,7 @@ function formatDate(iso: string): string {
 }
 
 export function AuditTrail() {
+  const queryClient = useQueryClient();
   const [eventFilter, setEventFilter] = useState<string>("all");
 
   const filterValue = eventFilter === "all" ? "" : eventFilter;
@@ -49,6 +50,11 @@ export function AuditTrail() {
 
   function handleExport() {
     window.open(getAuditExportUrl(), "_blank");
+    toast.success("Audit log exported", {
+      description: "Export event logged to the audit trail",
+    });
+    // Refetch audit log to show the new "exported" entry
+    queryClient.invalidateQueries({ queryKey: ["audit"] });
   }
 
   return (

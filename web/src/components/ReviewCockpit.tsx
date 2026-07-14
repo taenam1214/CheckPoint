@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { fetchDecisions, submitReview, dripDecision, fetchReviewedCount } from "../lib/api";
 import { Button } from "./ui/button";
+import { PageTransition } from "./PageTransition";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
@@ -146,7 +147,7 @@ export function ReviewCockpit() {
 
   if (isError) {
     return (
-      <div className="flex h-screen flex-col">
+      <PageTransition className="flex h-screen flex-col">
         <AppHeader
           currentPage="review"
           onResetSuccess={() => toast.success("Demo reset complete")}
@@ -163,13 +164,13 @@ export function ReviewCockpit() {
             Try again
           </Button>
         </div>
-      </div>
+      </PageTransition>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex h-screen flex-col">
+      <PageTransition className="flex h-screen flex-col">
         <AppHeader
           currentPage="review"
           onResetSuccess={() => toast.success("Demo reset complete")}
@@ -182,12 +183,12 @@ export function ReviewCockpit() {
             <DetailSkeleton />
           </main>
         </div>
-      </div>
+      </PageTransition>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <PageTransition className="flex h-screen flex-col">
       <AppHeader
         currentPage="review"
         pendingCount={decisions.length}
@@ -225,6 +226,6 @@ export function ReviewCockpit() {
       </div>
 
       <KeyboardShortcuts />
-    </div>
+    </PageTransition>
   );
 }

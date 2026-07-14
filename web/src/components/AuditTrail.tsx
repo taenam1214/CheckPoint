@@ -8,6 +8,7 @@ import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
+import { PageTransition } from "./PageTransition";
 import {
   Select,
   SelectContent,
@@ -59,7 +60,7 @@ export function AuditTrail() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <PageTransition className="flex h-screen flex-col">
       <AppHeader
         currentPage="audit"
         onResetSuccess={() => toast.success("Demo reset complete")}
@@ -198,6 +199,6 @@ export function AuditTrail() {
           </table>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

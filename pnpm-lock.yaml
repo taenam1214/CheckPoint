@@ -71,6 +71,9 @@ importers:
       lucide-react:
         specifier: ^1.21.0
         version: 1.21.0(react@19.2.7)
+      motion:
+        specifier: ^12.42.2
+        version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -1914,6 +1917,20 @@ packages:
     resolution: {integrity: sha512-Zf4Xve4RymLl7NgaavNebZ01joJ8MfVerOG43wy7SHLO+r+K0C6d/SE0BiR7AV5V1VOCFlOP7ecdo+I4qmiHrQ==}
     engines: {node: '>=20'}
 
+  framer-motion@12.42.2:
+    resolution: {integrity: sha512-5XY9luDiu0oHfHBjpDthFMh0ES+122w6p/papSJBweMkO8Sn+PW2QaEgRblQBpWFnuvZS5qvarpt/hO2pjGmnw==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2027,6 +2044,26 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
+
+  motion-dom@12.42.2:
+    resolution: {integrity: sha512-5gIMWLp/PycBtJRJWRgjxke5n8dlvkSn2DrYW+tr3XcqAZY1xZh6BJyooJXCM8wdfM7wfMjkBJNLge1CKPUIRA==}
+
+  motion-utils@12.39.0:
+    resolution: {integrity: sha512-8nadJAJjTtqRkmRF36FoJTrywK9nnFmnPwnSMyxaOCU7GDjN9RTMJIxx9De8ErM+vpPhMccr/6fo5WciyQLnMQ==}
+
+  motion@12.42.2:
+    resolution: {integrity: sha512-Atvv11yUKIid41cVrRBDVX5m8tF8kNpExRSlbpt6APClhDjtwQssgFHhQzejxw7/7YYbjHSPKBVbHo05BuJT5Q==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   nanoid@3.3.15:
     resolution: {integrity: sha512-y7Wygv/7mEOvxTuEQDB8StXdMRBWf1kR/tlhAzBRUFkB2jfcLOAxO/SHmOO2zgz1pVgK29/kyupn059/bCHdjA==}
@@ -3812,6 +3849,15 @@ snapshots:
       fast-querystring: 1.1.2
       safe-regex2: 5.1.1
 
+  framer-motion@12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+    dependencies:
+      motion-dom: 12.42.2
+      motion-utils: 12.39.0
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+
   fsevents@2.3.3:
     optional: true
 
@@ -3895,6 +3941,20 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  motion-dom@12.42.2:
+    dependencies:
+      motion-utils: 12.39.0
+
+  motion-utils@12.39.0: {}
+
+  motion@12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+    dependencies:
+      framer-motion: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
 
   nanoid@3.3.15: {}
 

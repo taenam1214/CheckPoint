@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { FileText, BookOpen, History, Check, X, Pencil, Loader2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import type { Decision } from "../lib/api";
@@ -116,9 +117,14 @@ export function DecisionDetail({
   }
 
   return (
-    <div
+    <AnimatePresence mode="wait">
+    <motion.div
       key={decision.id}
-      className={cn("flex h-full flex-col overflow-y-auto animate-fade-in", RISK_BG[decision.riskTier])}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={cn("flex h-full flex-col overflow-y-auto", RISK_BG[decision.riskTier])}
     >
       {/* Header with risk-colored top border */}
       <div className={cn("border-b border-border px-6 py-4", RISK_TOP_BORDER[decision.riskTier])}>
@@ -161,8 +167,11 @@ export function DecisionDetail({
         </h3>
         <div className="space-y-2">
           {decision.context.facts.map((fact, i) => (
-            <div
+            <motion.div
               key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
               className={cn(
                 "flex items-center justify-between rounded-md border px-3 py-2 text-sm",
                 fact.flag
@@ -179,7 +188,7 @@ export function DecisionDetail({
                   </span>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -231,8 +240,16 @@ export function DecisionDetail({
       </div>
 
       {/* Edit sheet */}
+      <AnimatePresence>
       {editMode && (
-        <div className="border-b border-border bg-muted/30 px-6 py-4 animate-fade-in">
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="overflow-hidden border-b border-border bg-muted/30"
+        >
+        <div className="px-6 py-4">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Edit & Approve
           </h3>
@@ -273,7 +290,9 @@ export function DecisionDetail({
             </span>
           </div>
         </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Action buttons */}
       <div className="mt-auto border-t border-border bg-background px-6 py-4">
@@ -335,6 +354,7 @@ export function DecisionDetail({
           </p>
         )}
       </div>
-    </div>
+    </motion.div>
+    </AnimatePresence>
   );
 }

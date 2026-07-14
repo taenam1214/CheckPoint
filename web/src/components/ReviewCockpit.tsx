@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { fetchDecisions, submitReview } from "../lib/api";
+import { fetchDecisions, submitReview, dripDecision } from "../lib/api";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
@@ -66,6 +66,19 @@ export function ReviewCockpit() {
     },
     [selectedId, reviewMutation],
   );
+
+  // Auto-drip: add a new pending decision every 8 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        await dripDecision();
+        queryClient.invalidateQueries({ queryKey: ["decisions"] });
+      } catch {
+        // Silently ignore — drip pool may be exhausted
+      }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [queryClient]);
 
   // Keyboard shortcuts
   useEffect(() => {

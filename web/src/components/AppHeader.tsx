@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router";
-import { ShieldCheck, ListChecks, ScrollText, RotateCcw, Loader2 } from "lucide-react";
+import { ShieldCheck, ListChecks, ScrollText, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
 import { resetDemo } from "../lib/api";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
@@ -9,10 +9,11 @@ import { cn } from "../lib/utils";
 interface AppHeaderProps {
   currentPage: "review" | "audit";
   pendingCount?: number;
+  reviewedCount?: number;
   onResetSuccess?: () => void;
 }
 
-export function AppHeader({ currentPage, pendingCount, onResetSuccess }: AppHeaderProps) {
+export function AppHeader({ currentPage, pendingCount, reviewedCount, onResetSuccess }: AppHeaderProps) {
   const queryClient = useQueryClient();
   const location = useLocation();
 
@@ -70,6 +71,13 @@ export function AppHeader({ currentPage, pendingCount, onResetSuccess }: AppHead
       </div>
 
       <div className="flex items-center gap-3">
+        {reviewedCount !== undefined && reviewedCount > 0 && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="tabular-nums font-medium">{reviewedCount}</span> reviewed
+          </span>
+        )}
+
         <Button
           size="sm"
           variant="outline"

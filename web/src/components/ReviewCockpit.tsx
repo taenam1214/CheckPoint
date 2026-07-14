@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { fetchDecisions, submitReview, dripDecision } from "../lib/api";
+import { fetchDecisions, submitReview, dripDecision, fetchReviewedCount } from "../lib/api";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
@@ -18,6 +18,11 @@ export function ReviewCockpit() {
   const { data: decisions = [], isLoading } = useQuery({
     queryKey: ["decisions", "pending"],
     queryFn: () => fetchDecisions("pending"),
+  });
+
+  const { data: reviewedCount } = useQuery({
+    queryKey: ["reviewedCount"],
+    queryFn: fetchReviewedCount,
   });
 
   // Auto-select first when selection is invalid
@@ -157,6 +162,7 @@ export function ReviewCockpit() {
       <AppHeader
         currentPage="review"
         pendingCount={decisions.length}
+        reviewedCount={reviewedCount}
         onResetSuccess={() => toast.success("Demo reset complete")}
       />
 

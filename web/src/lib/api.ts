@@ -79,6 +79,16 @@ export function getAuditExportUrl(): string {
   return `${API_BASE}/api/audit/export?format=csv`;
 }
 
+export async function fetchReviewedCount(): Promise<number> {
+  const entries = await fetchAuditLog();
+  return entries.filter(
+    (e) =>
+      e.eventType === "human_approved" ||
+      e.eventType === "human_rejected" ||
+      e.eventType === "human_edited",
+  ).length;
+}
+
 // ─── Demo ────────────────────────────────────────────────────
 
 export async function resetDemo(): Promise<{ status: string }> {

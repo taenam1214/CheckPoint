@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Bot, Inbox } from "lucide-react";
 import { cn } from "../lib/utils";
 import type { Decision } from "../lib/api";
@@ -39,6 +40,13 @@ interface QueueListProps {
 }
 
 export function QueueList({ decisions, selectedId, onSelect }: QueueListProps) {
+  // Force re-render every 15s so relative timestamps stay fresh
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(timer);
+  }, []);
+
   if (decisions.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">

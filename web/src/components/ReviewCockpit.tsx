@@ -8,6 +8,7 @@ import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
 import { QueueSkeleton } from "./QueueSkeleton";
 import { DetailSkeleton } from "./DetailSkeleton";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
 
 export function ReviewCockpit() {
   const queryClient = useQueryClient();
@@ -187,6 +188,8 @@ export function ReviewCockpit() {
           )}
         </main>
       </div>
+
+      <KeyboardShortcuts />
     </div>
   );
 }

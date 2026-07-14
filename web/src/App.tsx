@@ -1,9 +1,15 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { ReviewCockpit } from "./components/ReviewCockpit";
-import { AuditTrail } from "./components/AuditTrail";
+
+const ReviewCockpit = lazy(() =>
+  import("./components/ReviewCockpit").then((m) => ({ default: m.ReviewCockpit })),
+);
+const AuditTrail = lazy(() =>
+  import("./components/AuditTrail").then((m) => ({ default: m.AuditTrail })),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,11 +30,13 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<ReviewCockpit />} />
-            <Route path="/audit" element={<AuditTrail />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense>
+            <Routes>
+              <Route path="/" element={<ReviewCockpit />} />
+              <Route path="/audit" element={<AuditTrail />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
           <Toaster position="bottom-right" richColors closeButton />
         </BrowserRouter>
       </QueryClientProvider>

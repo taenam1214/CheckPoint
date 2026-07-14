@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion } from "motion/react";
 import { Filter, Download, FileSearch, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
@@ -138,16 +139,19 @@ export function AuditTrail() {
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => {
+              {entries.map((entry, i) => {
                 const snap = entry.snapshot as Record<string, unknown>;
                 const eventInfo = EVENT_LABELS[entry.eventType] || {
                   label: entry.eventType,
                   className: "bg-gray-100 text-gray-700 border-gray-200",
                 };
                 return (
-                  <tr
+                  <motion.tr
                     key={entry.id}
-                    className="border-b border-border hover:bg-muted/30 animate-fade-in"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: Math.min(i * 0.02, 0.3) }}
+                    className="border-b border-border hover:bg-muted/30"
                   >
                     <td className="whitespace-nowrap px-4 py-2 font-mono text-xs text-muted-foreground">
                       {formatDate(entry.createdAt)}
@@ -187,7 +191,7 @@ export function AuditTrail() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                  </tr>
+                  </motion.tr>
                 );
               })}
             </tbody>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Filter, Download, FileSearch } from "lucide-react";
+import { Filter, Download, FileSearch, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -42,7 +42,7 @@ export function AuditTrail() {
 
   const filterValue = eventFilter === "all" ? "" : eventFilter;
 
-  const { data: entries = [], isLoading } = useQuery({
+  const { data: entries = [], isLoading, isError, error } = useQuery({
     queryKey: ["audit", filterValue],
     queryFn: () =>
       fetchAuditLog(filterValue ? { event_type: filterValue } : undefined),
@@ -96,7 +96,22 @@ export function AuditTrail() {
 
       {/* Table */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+        {isError ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
+            <AlertTriangle className="h-10 w-10 text-red-500" />
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">Failed to load audit log</p>
+              <p className="mt-0.5 text-xs">{error instanceof Error ? error.message : "Unknown error"}</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["audit"] })}
+            >
+              Try again
+            </Button>
+          </div>
+        ) : isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full rounded-md" />

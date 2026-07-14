@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { AlertTriangle } from "lucide-react";
 import { fetchDecisions, submitReview, dripDecision, fetchReviewedCount } from "../lib/api";
+import { Button } from "./ui/button";
 import { QueueList } from "./QueueList";
 import { DecisionDetail } from "./DecisionDetail";
 import { AppHeader } from "./AppHeader";
@@ -15,7 +17,7 @@ export function ReviewCockpit() {
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { data: decisions = [], isLoading } = useQuery({
+  const { data: decisions = [], isLoading, isError, error } = useQuery({
     queryKey: ["decisions", "pending"],
     queryFn: () => fetchDecisions("pending"),
   });
@@ -69,6 +71,10 @@ export function ReviewCockpit() {
 
       // Set next selection after refetch — use a small delay to let data refresh
       setTimeout(() => setSelectedId(nextId), 100);
+    },
+    onError: (err) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Review failed", { description: message });
     },
   });
 
@@ -137,6 +143,29 @@ export function ReviewCockpit() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedIndex, decisions, handleAction]);
+
+  if (isError) {
+    return (
+      <div className="flex h-screen flex-col">
+        <AppHeader
+          currentPage="review"
+          onResetSuccess={() => toast.success("Demo reset complete")}
+        />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-muted-foreground">
+          <AlertTriangle className="h-10 w-10 text-red-500" />
+          <p className="text-sm font-medium text-foreground">Failed to load decisions</p>
+          <p className="text-xs">{error instanceof Error ? error.message : "Unknown error"}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ["decisions"] })}
+          >
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

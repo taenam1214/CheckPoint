@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+// ─── Types ──────────────────────────────────────────────────
 
 export interface Decision {
   id: string;
@@ -20,37 +22,6 @@ export interface Decision {
   resolvedAt: string | null;
 }
 
-export async function fetchDecisions(status?: string): Promise<Decision[]> {
-  const url = status
-    ? `${API_BASE}/api/decisions?status=${status}`
-    : `${API_BASE}/api/decisions`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch decisions");
-  return res.json();
-}
-
-export async function fetchDecision(id: string): Promise<Decision> {
-  const res = await fetch(`${API_BASE}/api/decisions/${id}`);
-  if (!res.ok) throw new Error("Failed to fetch decision");
-  return res.json();
-}
-
-export async function submitReview(
-  decisionId: string,
-  verdict: "approved" | "rejected" | "edited",
-  note?: string,
-) {
-  const res = await fetch(`${API_BASE}/api/decisions/${decisionId}/review`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ verdict, note }),
-  });
-  if (!res.ok) throw new Error("Failed to submit review");
-  return res.json();
-}
-
-// ─── Audit ───────────────────────────────────────────────────
-
 export interface AuditEntry {
   id: string;
   decisionId: string;
@@ -61,6 +32,77 @@ export interface AuditEntry {
   agentName: string;
 }
 
+// ─── Error class ────────────────────────────────────────────
+
+export class ApiError extends Error {
+  constructor(
+    public statusCode: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+// ─── Fetch helper ───────────────────────────────────────────
+
+async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(
+        res.status,
+        (body as { error?: string }).error || `Request failed (${res.status})`,
+      );
+    }
+
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new ApiError(408, "Request timed out");
+    }
+    throw new ApiError(0, "Network error — check your connection");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ─── Decisions ──────────────────────────────────────────────
+
+export async function fetchDecisions(status?: string): Promise<Decision[]> {
+  const url = status
+    ? `${API_BASE}/api/decisions?status=${status}`
+    : `${API_BASE}/api/decisions`;
+  return apiFetch<Decision[]>(url);
+}
+
+export async function fetchDecision(id: string): Promise<Decision> {
+  return apiFetch<Decision>(`${API_BASE}/api/decisions/${id}`);
+}
+
+export async function submitReview(
+  decisionId: string,
+  verdict: "approved" | "rejected" | "edited",
+  note?: string,
+) {
+  return apiFetch(`${API_BASE}/api/decisions/${decisionId}/review`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ verdict, note }),
+  });
+}
+
+// ─── Audit ───────────────────────────────────────────────────
+
 export async function fetchAuditLog(params?: {
   event_type?: string;
   decision_id?: string;
@@ -70,9 +112,7 @@ export async function fetchAuditLog(params?: {
   if (params?.decision_id) searchParams.set("decision_id", params.decision_id);
   const qs = searchParams.toString();
   const url = `${API_BASE}/api/audit${qs ? `?${qs}` : ""}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch audit log");
-  return res.json();
+  return apiFetch<AuditEntry[]>(url);
 }
 
 export function getAuditExportUrl(): string {
@@ -92,13 +132,13 @@ export async function fetchReviewedCount(): Promise<number> {
 // ─── Demo ────────────────────────────────────────────────────
 
 export async function resetDemo(): Promise<{ status: string }> {
-  const res = await fetch(`${API_BASE}/api/demo/reset`, { method: "POST" });
-  if (!res.ok) throw new Error("Failed to reset demo");
-  return res.json();
+  return apiFetch<{ status: string }>(`${API_BASE}/api/demo/reset`, {
+    method: "POST",
+  });
 }
 
 export async function dripDecision(): Promise<{ dripped: string }> {
-  const res = await fetch(`${API_BASE}/api/demo/drip`, { method: "POST" });
-  if (!res.ok) throw new Error("Failed to drip decision");
-  return res.json();
+  return apiFetch<{ dripped: string }>(`${API_BASE}/api/demo/drip`, {
+    method: "POST",
+  });
 }

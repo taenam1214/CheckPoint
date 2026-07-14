@@ -238,28 +238,39 @@ export function DecisionDetail({
           </h3>
           <textarea
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value.length <= 2000) setNote(e.target.value);
+            }}
             placeholder="Add a note or adjustment reason..."
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             rows={3}
+            maxLength={2000}
             autoFocus
           />
-          <div className="mt-2 flex gap-2">
-            <Button
-              size="sm"
-              onClick={handleEdit}
-              disabled={isSubmitting || !note.trim()}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Check className="h-3.5 w-3.5" />
-              )}
-              Confirm Edit & Approve
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleEdit}
+                disabled={isSubmitting || !note.trim()}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
+                )}
+                Confirm Edit & Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </div>
+            <span className={cn(
+              "text-[11px] tabular-nums",
+              note.length > 1800 ? "text-red-500" : "text-muted-foreground",
+            )}>
+              {note.length}/2000
+            </span>
           </div>
         </div>
       )}

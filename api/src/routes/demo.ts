@@ -179,54 +179,64 @@ let dripIndex = 0;
 
 export async function demoRoutes(app: FastifyInstance) {
   // POST /api/demo/drip — insert one new pending decision
-  app.post("/api/demo/drip", async () => {
-    const template = DRIP_POOL[dripIndex % DRIP_POOL.length];
-    dripIndex++;
+  app.post("/api/demo/drip", async (_request, reply) => {
+    try {
+      const template = DRIP_POOL[dripIndex % DRIP_POOL.length];
+      dripIndex++;
 
-    // Find the matching agent
-    const [agent] = await db
-      .select()
-      .from(agents)
-      .where(sql`${agents.workflow} = ${template.agentWorkflow}`);
+      // Find the matching agent
+      const [agent] = await db
+        .select()
+        .from(agents)
+        .where(sql`${agents.workflow} = ${template.agentWorkflow}`);
 
-    if (!agent) {
-      return { error: "No matching agent found" };
+      if (!agent) {
+        return reply.status(500).send({ error: "No matching agent found" });
+      }
+
+      const [decision] = await db
+        .insert(decisions)
+        .values({
+          agentId: agent.id,
+          status: "pending",
+          proposedAction: template.proposedAction,
+          confidence: template.confidence,
+          riskTier: template.riskTier,
+          context: template.context,
+          similarCases: template.similarCases,
+        })
+        .returning();
+
+      // Audit log entry
+      await db.insert(auditLog).values({
+        decisionId: decision.id,
+        eventType: "decision_created",
+        snapshot: {
+          decision_id: decision.id,
+          agent: agent.name,
+          proposed_action: decision.proposedAction,
+          confidence: decision.confidence,
+          risk_tier: decision.riskTier,
+          context: template.context,
+        },
+      });
+
+      return { dripped: decision.id, action: decision.proposedAction };
+    } catch (err) {
+      app.log.error(err);
+      return reply.status(500).send({ error: "Failed to drip decision" });
     }
-
-    const [decision] = await db
-      .insert(decisions)
-      .values({
-        agentId: agent.id,
-        status: "pending",
-        proposedAction: template.proposedAction,
-        confidence: template.confidence,
-        riskTier: template.riskTier,
-        context: template.context,
-        similarCases: template.similarCases,
-      })
-      .returning();
-
-    // Audit log entry
-    await db.insert(auditLog).values({
-      decisionId: decision.id,
-      eventType: "decision_created",
-      snapshot: {
-        decision_id: decision.id,
-        agent: agent.name,
-        proposed_action: decision.proposedAction,
-        confidence: decision.confidence,
-        risk_tier: decision.riskTier,
-        context: template.context,
-      },
-    });
-
-    return { dripped: decision.id, action: decision.proposedAction };
   });
 
   // POST /api/demo/reset — wipe and re-seed with full hand-authored data
-  app.post("/api/demo/reset", async () => {
-    const count = await runSeed();
-    dripIndex = 0;
-    return { status: "reset", decisions_seeded: count };
+  app.post("/api/demo/reset", async (_request, reply) => {
+    try {
+      const count = await runSeed();
+      dripIndex = 0;
+      return { status: "reset", decisions_seeded: count };
+    } catch (err) {
+      app.log.error(err);
+      return reply.status(500).send({ error: "Failed to reset demo data" });
+    }
   });
 }

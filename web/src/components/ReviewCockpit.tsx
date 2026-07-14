@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { fetchDecisions, submitReview, dripDecision } from "../lib/api";
 import { QueueList } from "./QueueList";
@@ -10,6 +11,7 @@ import { DetailSkeleton } from "./DetailSkeleton";
 
 export function ReviewCockpit() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: decisions = [], isLoading } = useQuery({
@@ -46,13 +48,18 @@ export function ReviewCockpit() {
 
       queryClient.invalidateQueries({ queryKey: ["decisions"] });
 
-      // Fire toast
+      // Fire toast with audit trail link
       const verdictLabels = {
         approved: "Decision approved",
         rejected: "Decision rejected",
         edited: "Decision edited & approved",
       };
-      toast.success(verdictLabels[variables.verdict]);
+      toast.success(verdictLabels[variables.verdict], {
+        action: {
+          label: "View in audit trail →",
+          onClick: () => navigate("/audit"),
+        },
+      });
 
       // Set next selection after refetch — use a small delay to let data refresh
       setTimeout(() => setSelectedId(nextId), 100);

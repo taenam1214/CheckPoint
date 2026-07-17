@@ -4,6 +4,15 @@ import { FileText, BookOpen, History, Check, X, Pencil, Loader2 } from "lucide-r
 import { cn } from "../lib/utils";
 import type { Decision } from "../lib/api";
 import { Button } from "./ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "./ui/alert-dialog";
 
 const FLAG_STYLES: Record<string, string> = {
   stale: "bg-red-50 border-red-200 text-red-800",
@@ -87,14 +96,18 @@ const RISK_BG = {
 
 interface DecisionDetailProps {
   decision: Decision;
-  onAction: (verdict: "approved" | "rejected" | "edited", note?: string) => void;
+  onAction: (verdict: "approved" | "rejected" | "edited", note?: string, reason?: string) => void;
   isSubmitting: boolean;
+  rejectDialogOpen: boolean;
+  onRejectDialogChange: (open: boolean) => void;
 }
 
 export function DecisionDetail({
   decision,
   onAction,
   isSubmitting,
+  rejectDialogOpen,
+  onRejectDialogChange,
 }: DecisionDetailProps) {
   const [editMode, setEditMode] = useState(false);
   const [note, setNote] = useState("");
@@ -317,7 +330,7 @@ export function DecisionDetail({
             </kbd>
           </Button>
           <Button
-            onClick={() => onAction("rejected")}
+            onClick={() => onRejectDialogChange(true)}
             disabled={isSubmitting || editMode}
             variant="destructive"
           >
@@ -358,6 +371,35 @@ export function DecisionDetail({
           </p>
         )}
       </div>
+      {/* Reject confirmation dialog */}
+      <AlertDialog open={rejectDialogOpen} onOpenChange={onRejectDialogChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to reject: <span className="font-medium text-foreground">{decision.proposedAction}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                onAction("rejected");
+                onRejectDialogChange(false);
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+              Confirm Reject
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
     </AnimatePresence>
   );

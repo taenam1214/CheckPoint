@@ -17,6 +17,7 @@ export function ReviewCockpit() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
   const { data: decisions = [], isLoading, isError, error } = useQuery({
     queryKey: ["decisions", "pending"],
@@ -131,7 +132,7 @@ export function ReviewCockpit() {
         }
         case "r": {
           e.preventDefault();
-          handleAction("rejected");
+          if (selectedDecision) setRejectDialogOpen(true);
           break;
         }
         case "e": {
@@ -214,6 +215,8 @@ export function ReviewCockpit() {
               decision={selectedDecision}
               onAction={handleAction}
               isSubmitting={reviewMutation.isPending}
+              rejectDialogOpen={rejectDialogOpen}
+              onRejectDialogChange={setRejectDialogOpen}
             />
           ) : (
             <div className="flex h-full items-center justify-center">

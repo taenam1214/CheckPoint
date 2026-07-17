@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { Filter, Download, FileSearch, AlertTriangle } from "lucide-react";
+import { Filter, Download, FileSearch, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import { AppHeader } from "./AppHeader";
+
+const PAGE_SIZE = 50;
 
 const EVENT_LABELS: Record<string, { label: string; className: string }> = {
   decision_created: { label: "Created", className: "bg-blue-100 text-blue-700 border-blue-200" },
@@ -41,22 +43,43 @@ function formatDate(iso: string): string {
 export function AuditTrail() {
   const queryClient = useQueryClient();
   const [eventFilter, setEventFilter] = useState<string>("all");
+  const [page, setPage] = useState(0);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const filterValue = eventFilter === "all" ? "" : eventFilter;
+  const filterEventType = eventFilter === "all" ? undefined : eventFilter;
+  const fromISO = dateFrom ? new Date(dateFrom + "T00:00:00Z").toISOString() : undefined;
+  const toISO = dateTo ? new Date(dateTo + "T23:59:59Z").toISOString() : undefined;
 
-  const { data: entries = [], isLoading, isError, error } = useQuery({
-    queryKey: ["audit", filterValue],
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["audit", filterEventType, page, fromISO, toISO],
     queryFn: () =>
-      fetchAuditLog(filterValue ? { event_type: filterValue } : undefined),
+      fetchAuditLog({
+        event_type: filterEventType,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
+        from: fromISO,
+        to: toISO,
+      }),
   });
 
+  const entries = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const showingFrom = total > 0 ? page * PAGE_SIZE + 1 : 0;
+  const showingTo = Math.min((page + 1) * PAGE_SIZE, total);
+
   function handleExport() {
-    window.open(getAuditExportUrl(), "_blank");
+    window.open(getAuditExportUrl({ event_type: filterEventType, from: fromISO, to: toISO }), "_blank");
     toast.success("Audit log exported", {
       description: "Export event logged to the audit trail",
     });
-    // Refetch audit log to show the new "exported" entry
     queryClient.invalidateQueries({ queryKey: ["audit"] });
+  }
+
+  function handleFilterChange(value: string) {
+    setEventFilter(value);
+    setPage(0);
   }
 
   return (
@@ -73,7 +96,7 @@ export function AuditTrail() {
           <span className="text-xs font-medium text-muted-foreground">
             Filter:
           </span>
-          <Select value={eventFilter} onValueChange={setEventFilter}>
+          <Select value={eventFilter} onValueChange={handleFilterChange}>
             <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
@@ -86,8 +109,22 @@ export function AuditTrail() {
               <SelectItem value="exported">Exported</SelectItem>
             </SelectContent>
           </Select>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
+            className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+            placeholder="From"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
+            className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+            placeholder="To"
+          />
           <span className="text-xs tabular-nums text-muted-foreground">
-            {entries.length} entries
+            {total} entries
           </span>
         </div>
         <Button size="sm" variant="outline" onClick={handleExport}>
@@ -199,6 +236,36 @@ export function AuditTrail() {
           </table>
         )}
       </div>
+
+      {/* Pagination */}
+      {total > PAGE_SIZE && (
+        <div className="flex items-center justify-between border-t border-border px-4 py-2">
+          <span className="text-xs text-muted-foreground">
+            Showing {showingFrom}–{showingTo} of {total}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon-xs"
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <span className="px-2 text-xs tabular-nums text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              size="icon-xs"
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </PageTransition>
   );
 }

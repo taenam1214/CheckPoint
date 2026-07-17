@@ -104,25 +104,49 @@ export async function submitReview(
 
 // ─── Audit ───────────────────────────────────────────────────
 
+export interface AuditPage {
+  data: AuditEntry[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export async function fetchAuditLog(params?: {
   event_type?: string;
   decision_id?: string;
-}): Promise<AuditEntry[]> {
+  limit?: number;
+  offset?: number;
+  from?: string;
+  to?: string;
+}): Promise<AuditPage> {
   const searchParams = new URLSearchParams();
   if (params?.event_type) searchParams.set("event_type", params.event_type);
   if (params?.decision_id) searchParams.set("decision_id", params.decision_id);
+  if (params?.limit != null) searchParams.set("limit", String(params.limit));
+  if (params?.offset != null) searchParams.set("offset", String(params.offset));
+  if (params?.from) searchParams.set("from", params.from);
+  if (params?.to) searchParams.set("to", params.to);
   const qs = searchParams.toString();
   const url = `${API_BASE}/api/audit${qs ? `?${qs}` : ""}`;
-  return apiFetch<AuditEntry[]>(url);
+  return apiFetch<AuditPage>(url);
 }
 
-export function getAuditExportUrl(): string {
-  return `${API_BASE}/api/audit/export?format=csv`;
+export function getAuditExportUrl(params?: {
+  event_type?: string;
+  from?: string;
+  to?: string;
+}): string {
+  const searchParams = new URLSearchParams();
+  searchParams.set("format", "csv");
+  if (params?.event_type) searchParams.set("event_type", params.event_type);
+  if (params?.from) searchParams.set("from", params.from);
+  if (params?.to) searchParams.set("to", params.to);
+  return `${API_BASE}/api/audit/export?${searchParams.toString()}`;
 }
 
 export async function fetchReviewedCount(): Promise<number> {
-  const entries = await fetchAuditLog();
-  return entries.filter(
+  const page = await fetchAuditLog({ limit: 200 });
+  return page.data.filter(
     (e) =>
       e.eventType === "human_approved" ||
       e.eventType === "human_rejected" ||

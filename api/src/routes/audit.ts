@@ -107,7 +107,7 @@ export async function auditRoutes(app: FastifyInstance) {
 
       reply
         .header("Content-Type", "text/csv")
-        .header("Content-Disposition", `attachment; filename="checkpoint-audit-${Date.now()}.csv"`)
+        .header("Content-Disposition", `attachment; filename="checkpoint-audit-${new Date().toISOString().slice(0, 10)}.csv"`)
         .send(csv);
     } catch (err) {
       app.log.error(err);

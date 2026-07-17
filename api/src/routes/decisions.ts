@@ -29,6 +29,27 @@ const uuidParamSchema = z.object({
   id: z.uuid(),
 });
 
+const submitBodySchema = z.object({
+  agent_id: z.uuid(),
+  proposed_action: z.string().min(1).max(500),
+  confidence: z.number().min(0).max(1),
+  risk_tier: z.enum(["low", "medium", "high"]),
+  context: z.object({
+    summary: z.string(),
+    facts: z.array(z.object({
+      label: z.string(),
+      value: z.string(),
+      flag: z.string().optional(),
+    })),
+    policy_note: z.string(),
+  }),
+  similar_cases: z.array(z.object({
+    ref: z.string(),
+    summary: z.string(),
+    resolved: z.string(),
+  })).optional().default([]),
+});
+
 // ─── Routes ─────────────────────────────────────────────────
 export async function decisionRoutes(app: FastifyInstance) {
   // GET /api/decisions — list decisions, optionally filtered by status
@@ -200,6 +221,75 @@ export async function decisionRoutes(app: FastifyInstance) {
     } catch (err) {
       app.log.error(err);
       return reply.status(500).send({ error: "Failed to submit review" });
+    }
+  });
+
+  // POST /api/decisions/submit — external agent submits a new decision
+  app.post("/api/decisions/submit", async (request, reply) => {
+    const bodyParsed = submitBodySchema.safeParse(request.body);
+    if (!bodyParsed.success) {
+      return reply.status(400).send({
+        error: "Invalid request body",
+        details: bodyParsed.error.issues,
+      });
+    }
+
+    const { agent_id, proposed_action, confidence, risk_tier, context, similar_cases } = bodyParsed.data;
+
+    try {
+      // Verify agent exists and get threshold
+      const [agent] = await db
+        .select()
+        .from(agents)
+        .where(eq(agents.id, agent_id));
+
+      if (!agent) {
+        return reply.status(404).send({ error: "Agent not found" });
+      }
+
+      const now = new Date();
+      const shouldAutoApprove = confidence >= agent.autonomyThreshold && risk_tier === "low";
+
+      const [inserted] = await db
+        .insert(decisions)
+        .values({
+          agentId: agent_id,
+          status: shouldAutoApprove ? "auto_approved" : "pending",
+          proposedAction: proposed_action,
+          confidence,
+          riskTier: risk_tier,
+          context,
+          similarCases: similar_cases,
+          createdAt: now,
+          resolvedAt: shouldAutoApprove ? now : null,
+        })
+        .returning();
+
+      // Log audit event
+      await db.insert(auditLog).values({
+        decisionId: inserted.id,
+        eventType: shouldAutoApprove ? "auto_approved" : "decision_created",
+        snapshot: {
+          decision_id: inserted.id,
+          agent_id,
+          agent_name: agent.name,
+          proposed_action,
+          confidence,
+          risk_tier,
+          auto_approved: shouldAutoApprove,
+          submitted_at: now.toISOString(),
+        },
+        createdAt: now,
+      });
+
+      return reply.status(201).send({
+        id: inserted.id,
+        status: inserted.status,
+        auto_approved: shouldAutoApprove,
+      });
+    } catch (err) {
+      app.log.error(err);
+      return reply.status(500).send({ error: "Failed to submit decision" });
     }
   });
 }

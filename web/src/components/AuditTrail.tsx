@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "motion/react";
-import { Filter, Download, FileSearch, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Filter, Download, FileSearch, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAuditLog, getAuditExportUrl } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -29,6 +29,16 @@ const EVENT_LABELS: Record<string, { label: string; className: string }> = {
   exported: { label: "Exported", className: "bg-gray-100 text-gray-700 border-gray-200" },
 };
 
+function formatSnapshotKey(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatSnapshotValue(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString("en-US", {
@@ -46,6 +56,7 @@ export function AuditTrail() {
   const [page, setPage] = useState(0);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filterEventType = eventFilter === "all" ? undefined : eventFilter;
   const fromISO = dateFrom ? new Date(dateFrom + "T00:00:00Z").toISOString() : undefined;
@@ -168,6 +179,7 @@ export function AuditTrail() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 border-b border-border bg-muted/50">
               <tr className="text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <th className="w-8 px-2 py-2"></th>
                 <th className="px-4 py-2">Timestamp</th>
                 <th className="px-4 py-2">Event</th>
                 <th className="px-4 py-2">Agent</th>
@@ -183,14 +195,28 @@ export function AuditTrail() {
                   label: entry.eventType,
                   className: "bg-gray-100 text-gray-700 border-gray-200",
                 };
+                const isExpanded = expandedId === entry.id;
                 return (
+                  <>
                   <motion.tr
                     key={entry.id}
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: Math.min(i * 0.02, 0.3) }}
-                    className="border-b border-border hover:bg-muted/30"
+                    className={cn(
+                      "border-b border-border cursor-pointer hover:bg-muted/30",
+                      isExpanded && "bg-muted/20",
+                    )}
+                    onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                   >
+                    <td className="px-2 py-2">
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 0 : -90 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      </motion.div>
+                    </td>
                     <td className="whitespace-nowrap px-4 py-2 font-mono text-xs text-muted-foreground">
                       {formatDate(entry.createdAt)}
                     </td>
@@ -230,6 +256,34 @@ export function AuditTrail() {
                       )}
                     </td>
                   </motion.tr>
+                  <AnimatePresence>
+                  {isExpanded && (
+                    <motion.tr
+                      key={`${entry.id}-detail`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="border-b border-border bg-muted/10"
+                    >
+                      <td colSpan={7} className="px-10 py-3">
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-xs">
+                          {Object.entries(snap).map(([key, value]) => (
+                            <div key={key} className="flex gap-2">
+                              <span className="font-medium text-muted-foreground whitespace-nowrap">
+                                {formatSnapshotKey(key)}:
+                              </span>
+                              <span className="text-foreground truncate">
+                                {formatSnapshotValue(value)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  )}
+                  </AnimatePresence>
+                  </>
                 );
               })}
             </tbody>

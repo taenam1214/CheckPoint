@@ -13,6 +13,22 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from "./ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+
+const REJECTION_REASONS = [
+  { value: "policy_violation", label: "Policy Violation" },
+  { value: "insufficient_docs", label: "Insufficient Documentation" },
+  { value: "fraud_risk", label: "Fraud Risk" },
+  { value: "exceeds_authority", label: "Exceeds Authority" },
+  { value: "data_mismatch", label: "Data Mismatch" },
+  { value: "other", label: "Other" },
+] as const;
 
 const FLAG_STYLES: Record<string, string> = {
   stale: "bg-red-50 border-red-200 text-red-800",
@@ -111,6 +127,7 @@ export function DecisionDetail({
 }: DecisionDetailProps) {
   const [editMode, setEditMode] = useState(false);
   const [note, setNote] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
 
   const wouldAutoApprove = decision.confidence > decision.autonomyThreshold;
 
@@ -372,7 +389,10 @@ export function DecisionDetail({
         )}
       </div>
       {/* Reject confirmation dialog */}
-      <AlertDialog open={rejectDialogOpen} onOpenChange={onRejectDialogChange}>
+      <AlertDialog open={rejectDialogOpen} onOpenChange={(open) => {
+        onRejectDialogChange(open);
+        if (!open) setRejectReason("");
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Rejection</AlertDialogTitle>
@@ -380,15 +400,31 @@ export function DecisionDetail({
               You are about to reject: <span className="font-medium text-foreground">{decision.proposedAction}</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Rejection Reason</label>
+            <Select value={rejectReason} onValueChange={setRejectReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a reason..." />
+              </SelectTrigger>
+              <SelectContent>
+                {REJECTION_REASONS.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={() => {
-                onAction("rejected");
+                onAction("rejected", undefined, rejectReason);
                 onRejectDialogChange(false);
+                setRejectReason("");
               }}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !rejectReason}
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -44,11 +44,13 @@ export function ReviewCockpit() {
       decisionId,
       verdict,
       note,
+      reason,
     }: {
       decisionId: string;
       verdict: "approved" | "rejected" | "edited";
       note?: string;
-    }) => submitReview(decisionId, verdict, note),
+      reason?: string;
+    }) => submitReview(decisionId, verdict, note, reason),
     onSuccess: (_data, variables) => {
       // Auto-advance: select the next item (or previous if at end)
       const nextIndex = selectedIndex < decisions.length - 1
@@ -81,9 +83,9 @@ export function ReviewCockpit() {
   });
 
   const handleAction = useCallback(
-    (verdict: "approved" | "rejected" | "edited", note?: string) => {
+    (verdict: "approved" | "rejected" | "edited", note?: string, reason?: string) => {
       if (!selectedId) return;
-      reviewMutation.mutate({ decisionId: selectedId, verdict, note });
+      reviewMutation.mutate({ decisionId: selectedId, verdict, note, reason });
     },
     [selectedId, reviewMutation],
   );

@@ -93,11 +93,12 @@ export async function submitReview(
   decisionId: string,
   verdict: "approved" | "rejected" | "edited",
   note?: string,
+  reason?: string,
 ) {
   return apiFetch(`${API_BASE}/api/decisions/${decisionId}/review`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ verdict, note }),
+    body: JSON.stringify({ verdict, note, reason }),
   });
 }
 

@@ -10,9 +10,19 @@ const statusQuerySchema = z.object({
   status: z.enum(["pending", "approved", "rejected", "auto_approved"]).optional(),
 });
 
+const REJECTION_REASONS = [
+  "policy_violation",
+  "insufficient_docs",
+  "fraud_risk",
+  "exceeds_authority",
+  "data_mismatch",
+  "other",
+] as const;
+
 const reviewBodySchema = z.object({
   verdict: z.enum(["approved", "rejected", "edited"]),
   note: z.string().max(2000).optional(),
+  reason: z.enum(REJECTION_REASONS).optional(),
 });
 
 const uuidParamSchema = z.object({
@@ -123,7 +133,7 @@ export async function decisionRoutes(app: FastifyInstance) {
     }
 
     const { id } = paramsParsed.data;
-    const { verdict, note } = bodyParsed.data;
+    const { verdict, note, reason } = bodyParsed.data;
 
     try {
       // Check decision exists and is pending
@@ -180,6 +190,7 @@ export async function decisionRoutes(app: FastifyInstance) {
           reviewer: "demo-user",
           verdict,
           note: note || null,
+          reason: reason || null,
           resolved_at: now.toISOString(),
         },
         createdAt: now,

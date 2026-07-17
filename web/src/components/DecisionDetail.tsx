@@ -148,6 +148,10 @@ export function DecisionDetail({
           <span>{decision.agentName}</span>
           <span className="text-border">·</span>
           <span>Confidence: {Math.round(decision.confidence * 100)}%</span>
+          <span className="text-border">·</span>
+          <span className="select-all font-mono">{decision.id.slice(0, 8)}</span>
+          <span className="text-border">·</span>
+          <span>{new Date(decision.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
         </div>
 
         {/* Autonomy-graduation touch */}

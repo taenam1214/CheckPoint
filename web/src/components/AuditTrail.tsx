@@ -33,8 +33,21 @@ function formatSnapshotKey(key: string): string {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function formatSnapshotValue(value: unknown): string {
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m < 60) return `${m}m ${s}s`;
+  const h = Math.floor(m / 60);
+  const rm = m % 60;
+  return `${h}h ${rm}m`;
+}
+
+function formatSnapshotValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return "—";
+  if (key === "time_to_resolution_seconds" && typeof value === "number") {
+    return formatDuration(value);
+  }
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
@@ -274,7 +287,7 @@ export function AuditTrail() {
                                 {formatSnapshotKey(key)}:
                               </span>
                               <span className="text-foreground truncate">
-                                {formatSnapshotValue(value)}
+                                {formatSnapshotValue(key, value)}
                               </span>
                             </div>
                           ))}

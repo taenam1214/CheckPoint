@@ -200,6 +200,10 @@ export async function decisionRoutes(app: FastifyInstance) {
             ? "human_rejected"
             : "human_edited";
 
+      // Calculate time to resolution
+      const createdAtMs = decision.createdAt ? new Date(decision.createdAt).getTime() : now.getTime();
+      const timeToResolutionSeconds = Math.round((now.getTime() - createdAtMs) / 1000);
+
       await db.insert(auditLog).values({
         decisionId: id,
         eventType,
@@ -213,6 +217,7 @@ export async function decisionRoutes(app: FastifyInstance) {
           note: note || null,
           reason: reason || null,
           resolved_at: now.toISOString(),
+          time_to_resolution_seconds: timeToResolutionSeconds,
         },
         createdAt: now,
       });

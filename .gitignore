@@ -37,6 +37,7 @@ docker-compose.override.yml
 # Drizzle ORM
 # ==============================
 drizzle/meta/
+api/drizzle/meta/
 
 # ==============================
 # Vite
